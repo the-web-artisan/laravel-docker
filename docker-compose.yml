@@ -1,0 +1,76 @@
+version: "3.7"
+
+services:
+    app:
+        image: "laratest/app:${TAG:-latest}"
+        build:
+            args:
+                user: testusr
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        container_name: test-app
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        networks:
+            - test-network
+
+    web:
+        image: nginx:1.19.4
+        container_name: test-nginx
+        restart: unless-stopped
+        ports:
+            - ${SERVER_PORT:-80}:80
+        volumes:
+            - ./:/var/www
+            - ./docker-compose/nginx:/etc/nginx/conf.d/
+        networks:
+            - test-network
+
+    db:
+        image: mysql:5.7
+        container_name: test-db
+        restart: unless-stopped
+        ports:
+            - ${SERVER_PORT_DB:-3306}:3306
+        volumes:
+            - dbdata:/var/lib/mysql
+        environment:
+            - MYSQL_DATABASE=${DB_DATABASE:-homestead}
+            - MYSQL_USER=${DB_USERNAME:-homestead}
+            - MYSQL_PASSWORD=${DB_PASSWORD:-secret}
+            - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-secret}
+        networks:
+            - test-network
+
+    phpmyadmin:
+        image: phpmyadmin
+        restart: always
+        ports:
+            - ${PHPMYADMIN_PORT_DB:-8080}:80
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=${DB_HOST:-db}
+            - PMA_USER=${DB_USERNAME:-homestead}
+            - PMA_PASSWORD=${DB_PASSWORD:-secret}
+        networks:
+            - test-network
+
+    mailhog:
+        image: mailhog/mailhog
+        logging:
+            driver: "none"
+        ports:
+            - ${MAIL_PORT:-1025}:1025
+            - ${MAILHOG_PORT:-8025}:8025
+        networks:
+            - test-network
+
+networks:
+    test-network:
+        driver: bridge
+
+volumes:
+    dbdata:
