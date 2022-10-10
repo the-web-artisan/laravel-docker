@@ -18,11 +18,15 @@ services:
             - test-network
 
     web:
-        image: nginx:1.19.4
+        image: "scout3030/web:${TAG:-latest}"
+        build:
+            context: ./
+            dockerfile: docker-compose/nginx.dockerfile
         container_name: test-nginx
         restart: unless-stopped
         ports:
             - ${SERVER_PORT:-80}:80
+            - ${SERVER_PORT_SSL:-443}:443
         volumes:
             - ./:/var/www
             - ./docker-compose/nginx:/etc/nginx/conf.d/
