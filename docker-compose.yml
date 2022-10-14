@@ -33,32 +33,31 @@ services:
         networks:
             - test-network
 
-    db:
-        image: mysql:5.7
-        container_name: test-db
+    pgsql:
+        image: postgres:9.6
+        container_name: test-pgsql
         restart: unless-stopped
+        expose:
+            - 5432
         ports:
-            - ${SERVER_PORT_DB:-3306}:3306
+            - ${DB_PORT:-5432}:5432
         volumes:
-            - dbdata:/var/lib/mysql
+            - dbpgsql:/docker-entrypoint-initdb.d/
         environment:
-            - MYSQL_DATABASE=${DB_DATABASE:-homestead}
-            - MYSQL_USER=${DB_USERNAME:-homestead}
-            - MYSQL_PASSWORD=${DB_PASSWORD:-secret}
-            - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-secret}
+            POSTGRES_USER: ${DB_USERNAME:-homestead}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+            POSTGRES_DB: ${DB_DATABASE:-homestead}
         networks:
             - test-network
 
-    phpmyadmin:
-        image: phpmyadmin
+    adminer:
+        image: adminer
         restart: always
         ports:
-            - ${PHPMYADMIN_PORT_DB:-8080}:80
+            - ${ADMINER_PORT_DB:-8080}:8080
         environment:
-            - PMA_ARBITRARY=1
-            - PMA_HOST=${DB_HOST:-db}
-            - PMA_USER=${DB_USERNAME:-homestead}
-            - PMA_PASSWORD=${DB_PASSWORD:-secret}
+            - ADMINER_DEFAULT_SERVER=pgsql
+            - ADMINER_DESIGN=price
         networks:
             - test-network
 
@@ -77,4 +76,4 @@ networks:
         driver: bridge
 
 volumes:
-    dbdata:
+    dbpgsql:
